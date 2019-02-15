@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import ch.uzh.ifi.ce.cabne.BR.AdaptivePWLBRCalculator;
+import ch.uzh.ifi.ce.cabne.BR.BRCalculator;
 import ch.uzh.ifi.ce.cabne.BR.PWLBRCalculator;
 import ch.uzh.ifi.ce.cabne.algorithm.BNEAlgorithm;
 import ch.uzh.ifi.ce.cabne.algorithm.BNEAlgorithmCallback;
@@ -38,11 +39,11 @@ public class LLGplotBNEalgorithm {
 		context.setIntegrator(new MCIntegrator<>(context));
 		context.setRng(1, new CommonRandomGenerator(1));
 		context.setRng(2, new CommonRandomGenerator(2));
-		context.setUpdateRule(new UnivariateDampenedUpdateRule(0.2, 0.7, 0.5 / context.getDoubleParameter("epsilon"), true));
+		//context.setUpdateRule(new UnivariateDampenedUpdateRule(0.2, 0.5, 0.5 / context.getDoubleParameter("epsilon"), true));
+		context.setUpdateRule(new UnivariateLinearUpdateRule(0.5));
 		context.setBRC(new PWLBRCalculator(context));
 		context.setOuterBRC(new PWLBRCalculator(context));
-		//context.setVerifier(new EstimatingVerifier1D(context));
-		context.setVerifier(null);
+		context.setVerifier(new EstimatingVerifier1D(context));
 		
 		// instanciate auction setting
 		context.setMechanism(new Proxy());
@@ -62,8 +63,6 @@ public class LLGplotBNEalgorithm {
 		// create callback that prints out first local player's strategy after each iteration
 		BNEAlgorithmCallback<Double, Double> callback = (iteration, type, strategies, epsilon) -> {
 			
-			// HACK: start with a smooth algo, then adjust to using raw BR to make a pretty graph
-			if (iteration==2) context.setUpdateRule(new UnivariateLinearUpdateRule(1.0));
 			
 			// print out strategy
 			StringBuilder builder = new StringBuilder();
@@ -80,17 +79,32 @@ public class LLGplotBNEalgorithm {
 				builder.append("  ");
 			}
 			
-			// alternatively, just sample the strategy on a regular grid.
-			/*
-			for (int i=0; i<=100; i++) {
-				double v = s.getMaxValue() * i / ((double) gridSize);
-				builder.append(String.format("%7.6f",v));
-				builder.append(" ");
-				builder.append(String.format("%7.6f",s.getBid(v)));
-				builder.append("  ");
-			}
-			*/
 			System.out.println(builder.toString());
+
+			// HACK: start with a smooth algo, then adjust to using raw BR to make a pretty graph.
+			// undo in next iteration so we actually get convergence
+			// redo in iteration before verification, so we get the true best response
+			//if (iteration==2) context.setUpdateRule(new UnivariateLinearUpdateRule(1.0));
+			if (iteration==15) context.setUpdateRule(new UnivariateLinearUpdateRule(1.0));
+			
+			if (iteration==2) {
+				context.setUpdateRule(new UnivariateLinearUpdateRule(1.0));
+				BRCalculator.Result<Double, Double> result = context.brc.computeBR(0, strategies);
+				context.setUpdateRule(new UnivariateLinearUpdateRule(0.5));
+				// print out strategy
+				builder = new StringBuilder();
+				builder.append(String.format("%2d %s        %4d %f  # ", iteration, "HACK:BR", 0, Double.POSITIVE_INFINITY));
+				
+				// cast s to UnivariatePWLStrategy to get access to underlying data structure.
+				sPWL = (UnivariatePWLStrategy) result.br;
+				for (Map.Entry<Double, Double> e : sPWL.getData().entrySet()) {
+					builder.append(String.format("%7.6f",e.getKey()));
+					builder.append(" ");
+					builder.append(String.format("%7.6f",e.getValue()));
+					builder.append("  ");
+				}
+				System.out.println(builder.toString());
+			}
 		};
 		bneAlgo.setCallback(callback);
 		
