@@ -25,7 +25,7 @@ public class LLLLGGSbatchEntryPoint {
 		int localgridsize = gridsize;
 		int globalgridsize = gridsize;
 		if (state.equalsIgnoreCase("verificationstep")) {
-			globalgridsize *= 2;
+			//globalgridsize *= 2;
 		}
 		
 		
