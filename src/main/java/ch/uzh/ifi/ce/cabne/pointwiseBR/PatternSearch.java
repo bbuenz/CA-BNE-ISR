@@ -56,7 +56,7 @@ public class PatternSearch<Value, Bid> extends Optimizer<Value, Bid> {
             	}
             }
             
-            int bestIndex = 0;
+            int bestIndex = pattern.getCenterIndex(patternSize);
             for (int j=0; j<patternSize; j++) {
             	if (fxx[j] > fxx[bestIndex]) {
             		bestIndex = j;
