@@ -26,8 +26,15 @@ public class VerificationStrategy implements Strategy<Double[], Double[]> {
 		
 		// compute polynomial coefficients
 		helpers = new QuadraticGridHelper[d];
-		for (int j=0; j<d; j++) {
-			helpers[j] = new QuadraticGridHelper(N, getMaxValue()[j], factor);
+		if (factor == 1.0) {
+			for (int j=0; j<d; j++) {
+				helpers[j] = new LinearGridHelper(N, getMaxValue()[j]);
+			}
+		}
+		else {
+			for (int j=0; j<d; j++) {
+				helpers[j] = new QuadraticGridHelper(N, getMaxValue()[j], factor);
+			}
 		}
 	}
 
