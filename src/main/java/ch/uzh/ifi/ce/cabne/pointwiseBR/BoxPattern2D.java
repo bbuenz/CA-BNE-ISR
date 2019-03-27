@@ -31,6 +31,9 @@ public class BoxPattern2D extends Pattern<Double[]> {
 			}
 		}
 		//System.out.println();
+		
+		// careful: need to keep the invariant that the original center is always contained in the pattern, even if it has, e.g., a coordinate of -0.0 instead of 0.0
+		result.set(getCenterIndex(npoints), center);
 		return result;
 	}
 
