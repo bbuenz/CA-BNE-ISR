@@ -26,4 +26,6 @@ public class Quadratic implements Mechanism<Double, Double> {
             return v - payment;
         }
     }
+
+
 }

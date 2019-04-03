@@ -25,7 +25,12 @@ public class LLLLGGProportional extends LLLLGGMechanism {
 		}
 		return utility;
 	}
-	
+
+	@Override
+	public double[] computePayments(Double[][] bids, int[] alloc) {
+		return projectToCore(bids,alloc);
+	}
+
 	public double[] projectToCore(Double[][] bids, int[] alloc) {
 		// compute the vector pointing from the origin towards the winning bids.
 		double[] bidDirection = new double[6];

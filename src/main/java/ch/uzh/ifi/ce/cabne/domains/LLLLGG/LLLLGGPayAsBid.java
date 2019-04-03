@@ -11,4 +11,13 @@ public class LLLLGGPayAsBid extends LLLLGGMechanism {
 		}
 		return utility;
 	}
+
+	@Override
+	public double[] computePayments(Double[][] bids, int[] alloc) {
+		double[] payments=new double[bids.length];
+		for (int bundle : alloc) {
+			payments[bundle/2]+=bids[bundle/2][bundle%2];
+		}
+		return payments;
+	}
 }

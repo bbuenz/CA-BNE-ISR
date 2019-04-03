@@ -4,6 +4,7 @@ package ch.uzh.ifi.ce.cabne.domains.LLLLGG;
 import ch.uzh.ifi.ce.cabne.domains.Mechanism;
 
 
+
 public abstract class LLLLGGMechanism implements Mechanism<Double[], Double[]> {
 	static LLLLGGWD wd = new LLLLGGWD();
 
@@ -22,7 +23,10 @@ public abstract class LLLLGGMechanism implements Mechanism<Double[], Double[]> {
 	// This class handles winner determination and ties. Subclasses just need to implement the utility given a specific
 	// allocation.
 	public abstract double computeUtility(int i, Double[] v, Double[][] bids, int[] alloc);
-	
+
+	public double[] computePayments(Double[][] bids,int[] alloc){
+	    throw new UnsupportedOperationException("not implemented");
+    }
 	
 	
 	public int encodeWinners(int[] assignment) {

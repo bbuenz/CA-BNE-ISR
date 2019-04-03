@@ -9,14 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ch.uzh.ifi.ce.cabne.algorithm.BNESolverContext;
+import ch.uzh.ifi.ce.cabne.domains.LLLLGG.*;
 import ch.uzh.ifi.ce.cabne.domains.Mechanism;
-import ch.uzh.ifi.ce.cabne.domains.LLLLGG.LLLLGGParametrizedCoreSelectingRule;
-import ch.uzh.ifi.ce.cabne.domains.LLLLGG.LLLLGGPayAsBid;
-import ch.uzh.ifi.ce.cabne.domains.LLLLGG.LLLLGGProportional;
-import ch.uzh.ifi.ce.cabne.domains.LLLLGG.LLLLGGProxy;
-import ch.uzh.ifi.ce.cabne.domains.LLLLGG.LLLLGGQuadratic;
-import ch.uzh.ifi.ce.cabne.domains.LLLLGG.LLLLGGSampler;
-import ch.uzh.ifi.ce.cabne.domains.LLLLGG.LLLLGGStrategyParser;
 import ch.uzh.ifi.ce.cabne.helpers.UtilityHelpers;
 import ch.uzh.ifi.ce.cabne.integration.MCIntegrator;
 import ch.uzh.ifi.ce.cabne.pointwiseBR.MultivariateCrossPattern;
@@ -50,42 +44,8 @@ public class LLLLGGBestResponse {
 		
 		double targetepsilon = context.getDoubleParameter("epsilon");
 		int gridsize = context.getIntParameter("gridsize");
-		
-		// create mechanism
-		Mechanism<Double[], Double[]> mechanism;
-		if (context.getBooleanParameter("hacks.useccg")) {
-			throw new RuntimeException();
-			//mechanism = new LLLLGGQuadraticCCG();	
-		} else {
-			mechanism = new LLLLGGQuadratic();	
-		}
-		
-		if (context.hasParameter("hacks.paymentrule")) {
-			switch (context.getStringParameter("hacks.paymentrule")) {
-			case "firstprice":
-				mechanism = new LLLLGGPayAsBid();
-				break;
-			case "proportional":
-				mechanism = new LLLLGGProportional();
-				break;
-			case "proxy":
-				mechanism = new LLLLGGProxy();
-				break;
-			case "allroundergeneric":
-				// HACK to help out Benedikt
-				String ref = context.getStringParameter("hacks.paymentrule.ref");
-				String weight = context.getStringParameter("hacks.paymentrule.weight");
-				double amp = context.getDoubleParameter("hacks.paymentrule.amp");
-				mechanism = new LLLLGGParametrizedCoreSelectingRule(ref, weight, amp);
-			case "":
-			case "quadratic":
-				// already set payment rule (same as if this config was not present
-				break;
-			default:
-				throw new RuntimeException("don't recognize payment rule");
-			}
-		}
-		
+		LLLLGGMechanism mechanism = getMechanism(context);
+
 		// create pattern
 		Pattern<Double[]> pattern = new MultivariateCrossPattern(2);
 		//Pattern<Double[]> pattern = new MultivariateGaussianPattern(2, patternSize);
@@ -230,5 +190,43 @@ public class LLLLGGBestResponse {
 					    StandardOpenOption.TRUNCATE_EXISTING);
 			starttime = endtime;
 		}
-    }	
+    }
+
+	public static LLLLGGMechanism getMechanism(BNESolverContext<Double[], Double[]> context) {
+		// create mechanism
+		LLLLGGMechanism mechanism;
+		if (context.getBooleanParameter("hacks.useccg")) {
+			throw new RuntimeException();
+			//mechanism = new LLLLGGQuadraticCCG();
+		} else {
+			mechanism = new LLLLGGQuadratic();
+		}
+
+		if (context.hasParameter("hacks.paymentrule")) {
+			switch (context.getStringParameter("hacks.paymentrule")) {
+			case "firstprice":
+				mechanism = new LLLLGGPayAsBid();
+				break;
+			case "proportional":
+				mechanism = new LLLLGGProportional();
+				break;
+			case "proxy":
+				mechanism = new LLLLGGProxy();
+				break;
+			case "allroundergeneric":
+				// HACK to help out Benedikt
+				String ref = context.getStringParameter("hacks.paymentrule.ref");
+				String weight = context.getStringParameter("hacks.paymentrule.weight");
+				double amp = context.getDoubleParameter("hacks.paymentrule.amp");
+				mechanism = new LLLLGGParametrizedCoreSelectingRule(ref, weight, amp);
+			case "":
+			case "quadratic":
+				// already set payment rule (same as if this config was not present
+				break;
+			default:
+				throw new RuntimeException("don't recognize payment rule");
+			}
+		}
+		return mechanism;
+	}
 }

@@ -29,8 +29,15 @@ public class LLLLGGQuadratic extends LLLLGGMechanism {
 		}
 		return utility;
 	}
-	
-	public double[] projectToCore(Double[][] bids, int[] alloc, double[] referencePoint) {
+
+    @Override
+    public double[] computePayments(Double[][] bids,int[] alloc) {
+        double[] vcgPayments = wd.computeVCG(bids, alloc);
+        return projectToCore(bids, alloc, vcgPayments);
+
+    }
+
+    public double[] projectToCore(Double[][] bids, int[] alloc, double[] referencePoint) {
 		MIP mip = new MIP();
 		mip.setSolveParam(SolveParam.DISPLAY_OUTPUT, false); // make it not output megabytes of debugging info
 		mip.setSolveParam(SolveParam.THREADS, 1);
