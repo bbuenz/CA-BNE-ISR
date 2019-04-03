@@ -21,7 +21,11 @@ public class VerificationStrategy1D implements Strategy<Double, Double> {
 		this.N = N;
 		
 		// compute polynomial coefficients
-		helper = new QuadraticGridHelper(N, getMaxValue(), factor);
+		if (factor == 1.0) {
+			helper = new LinearGridHelper(N, getMaxValue());
+		} else {
+			helper = new QuadraticGridHelper(N, getMaxValue(), factor);
+		}
 	}
 
 	@Override

@@ -13,6 +13,8 @@ import ch.uzh.ifi.ce.cabne.domains.LLLLGG.*;
 import ch.uzh.ifi.ce.cabne.domains.Mechanism;
 import ch.uzh.ifi.ce.cabne.helpers.UtilityHelpers;
 import ch.uzh.ifi.ce.cabne.integration.MCIntegrator;
+import ch.uzh.ifi.ce.cabne.pointwiseBR.BoxPattern2D;
+import ch.uzh.ifi.ce.cabne.pointwiseBR.DoubleCrossPattern2D;
 import ch.uzh.ifi.ce.cabne.pointwiseBR.MultivariateCrossPattern;
 import ch.uzh.ifi.ce.cabne.pointwiseBR.Optimizer;
 import ch.uzh.ifi.ce.cabne.pointwiseBR.Pattern;
@@ -48,7 +50,12 @@ public class LLLLGGBestResponse {
 
 		// create pattern
 		Pattern<Double[]> pattern = new MultivariateCrossPattern(2);
-		//Pattern<Double[]> pattern = new MultivariateGaussianPattern(2, patternSize);
+		if (context.getBooleanParameter("hacks.newpattern")) {
+			pattern = new DoubleCrossPattern2D();
+		}
+		if (context.getBooleanParameter("hacks.boxpattern")) {
+			pattern = new BoxPattern2D();
+		}
 		
 		// compute rng offset (we use common random numbers, and we don't want them to be the same each iteration)
 		// NOTE: basename is not provided by Path class. Workaround: Convert it into a File, where basename is implemented implicitly
@@ -96,11 +103,14 @@ public class LLLLGGBestResponse {
 			// need to convert the parsed strategies from PWL to PWC
 			for (int j=0; j<6; j++) {
 				strats.add(stratsParsed.get(j));
-				int g = j<=3 ? gridsize : 2*gridsize;
-				stratsConverted.add(new VerificationStrategy(g, 0.6, stratsParsed.get(j)));
+				// HACK: global bidder has double gridsize (?)
+				//int g = j<=3 ? gridsize : 2*gridsize;
+				//stratsConverted.add(new VerificationStrategy(g, 0.6, stratsParsed.get(j)));
+				
+				stratsConverted.add(new VerificationStrategy(gridsize, 1.0, stratsParsed.get(j)));
 			}
 		} else {
-			for (GridStrategy2D s : parser.parse(strategyPath)) {
+			for (GridStrategy2D s : stratsParsed) {
 				strats.add(s);
 				stratsConverted.add(s);
 			}
@@ -119,7 +129,7 @@ public class LLLLGGBestResponse {
 			// The first n*n array jobs are for the local players, 
 			// the next n(n+1)/2 for the global players (fewer because of symmetry)
 			boolean isGlobal = index >= (gridsize*gridsize);
-			System.out.format("state  %s   isGlobal %s  index %d\n", state, isGlobal, index);
+			//System.out.format("state  %s   isGlobal %s  index %d\n", state, isGlobal, index);
 			if (isGlobal) {
 				index -= gridsize * gridsize;
 			}
@@ -132,7 +142,7 @@ public class LLLLGGBestResponse {
 			// There are n*n array jobs for the local player
 			// There are 2n(2n+1)/2 = jobs for the global players
 			if (isGlobal && state.equalsIgnoreCase("verificationstep")) {
-				gridsize *= 2;
+				//gridsize *= 2;
 			}
 			
 			// gridX, gridY are integers in {0, ..., gridsize}
@@ -181,8 +191,22 @@ public class LLLLGGBestResponse {
 	        builder.append(String.format("  'value': (%7.6f, %7.6f),\n", v[0], v[1]));
 	        builder.append(String.format("  'bid': (%7.6f, %7.6f),\n", newbid[0], newbid[1]));
 	        builder.append(String.format("  'br_utility': %7.6f,\n", result.utility));
+	        builder.append(String.format("  'eq_utility': %7.6f,\n", result.oldutility));
 	        builder.append(String.format("  'utility_loss': %7.6f,\n", epsilonAbs));
 	        builder.append(String.format("  'runtime_ms': %d,\n", endtime - starttime));
+	        
+	        if (state.equalsIgnoreCase("verificationstep")) {
+	        	// compute winning probability which will be used by verification script
+	        	// TODO: should use a custom integrator? --> hard to do without formalizing the WD module as a component of the algorithm
+	        	// HACK: use first price payment rule to extract winning probability, by setting value such that utility when winning is exactly 1
+	        	Mechanism<Double[], Double[]> oldMechanism = context.mechanism;
+	        	context.setMechanism(new LLLLGGPayAsBid());
+	        	double winProb0 = context.integrator.computeExpectedUtility(i, new Double[]{oldbid[0] + 1, oldbid[1]} , oldbid, stratsConverted);
+	        	double winProb1 = context.integrator.computeExpectedUtility(i, new Double[]{oldbid[0], oldbid[1] + 1} , oldbid, stratsConverted);
+	        	context.setMechanism(oldMechanism);
+	        	builder.append(String.format("  'winning_probability': (%7.6f, %7.6f),\n", winProb0, winProb1));
+	        }
+	        
 	        builder.append("}");
 			Files.write(outputPath, builder.toString().getBytes(), 
 					    StandardOpenOption.CREATE, 
