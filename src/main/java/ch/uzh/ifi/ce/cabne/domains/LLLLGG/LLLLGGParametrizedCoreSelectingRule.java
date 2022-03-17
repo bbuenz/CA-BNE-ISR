@@ -45,6 +45,9 @@ public class LLLLGGParametrizedCoreSelectingRule extends LLLLGGMechanism {
             case "vcg":
                 referencePoint = vcg;
                 break;
+            case "bids":
+                referencePoint = IR;
+                break;
             case "mirroredvcgpayoff":
                 referencePoint = new double[6];
                 double vcgPayoffRevenue = 0.0;
@@ -60,7 +63,7 @@ public class LLLLGGParametrizedCoreSelectingRule extends LLLLGGMechanism {
                 }
                 break;
             default:
-                throw new RuntimeException("don't recognize reference point");
+                throw new RuntimeException("don't recognize reference point " + refPointName);
         }
 
         // compute weights.
@@ -96,6 +99,10 @@ public class LLLLGGParametrizedCoreSelectingRule extends LLLLGGMechanism {
             case "equal":
                 inverseWeights = new double[]{1d, 1d, 1d, 1d, 1d, 1d};
                 break;
+            case "openingbid":
+                inverseWeights = new double[]{1 / 2d, 1 / 2d, 1 / 2d, 1 / 2d, 1 / 4d, 1 / 4d};
+                break;
+
             default:
                 throw new RuntimeException("don't recognize weight");
         }

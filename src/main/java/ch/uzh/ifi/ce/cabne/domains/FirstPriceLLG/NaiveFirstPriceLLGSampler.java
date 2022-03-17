@@ -75,4 +75,11 @@ public class NaiveFirstPriceLLGSampler extends BidSampler<Double, Double> {
 		};
 		return it;
 	}
+
+	@Override
+	public Double[] sampleGame() {
+		throw new UnsupportedOperationException("not yet implemented");
+	}
+
+
 }
